@@ -40,8 +40,8 @@
   <h1>TP 3 – A Scene Of Information And Flexibility</h1>
   <div class="sub">JDBC · DAO · JPA &amp; Spring Boot · Connection Pool</div>
   <div class="who">
-    <b>Nom Prénom :</b> ............................................<br>
-    <b>Groupe :</b> ............<br>
+    <b>Ramzi GUENOUNE</b><br>
+    ramzi.guenoune@eleve.isep.fr<br>
     ISEP – Bases de données / Java<br>
     Octobre 2026
   </div>
@@ -68,6 +68,7 @@
 
 <table class="t">
 <tr><th>Élément</th><th>Version utilisée</th></tr>
+<tr><td>Système</td><td>macOS (Terminal)</td></tr>
 <tr><td>SGBD</td><td>PostgreSQL 16 (local, base <code>isep</code>, utilisateur <code>postgres</code>)</td></tr>
 <tr><td>JDK</td><td>OpenJDK 21</td></tr>
 <tr><td>Driver JDBC</td><td><code>postgresql-42.7.3.jar</code> (celui demandé dans l'énoncé)</td></tr>
@@ -357,7 +358,7 @@ l'obtention des connexions. Avec BoneCP, <code>close()</code> ne ferme pas la co
 <p>Test : 500 requêtes <code>SELECT</code> exécutées par 10 threads en parallèle.</p>
 [[img pool | comparaison sans pool / pool maison / BoneCP]]
 <div class="answer">
-<p>Sans pool, les 500 requêtes prennent environ <b>5,2 s</b> ; avec un pool, environ <b>50 à 75 ms</b>, soit un facteur d'environ <b>100</b>.
+<p>Sans pool, les 500 requêtes prennent environ <b>4,6 s</b> ; avec un pool, environ <b>60 ms</b> (63 ms pour le pool maison, 58 ms pour BoneCP), soit environ <b>75 fois plus rapide</b>.
 Presque tout le temps est passé à <b>ouvrir les connexions</b> (connexion TCP, création d'un processus côté PostgreSQL, authentification
 SCRAM-SHA-256 volontairement coûteuse), et non à exécuter la requête elle-même. Le pool paie ce coût une seule fois au démarrage.
 On voit aussi que BoneCP n'a créé que 7 connexions pour servir les 10 threads.</p>
@@ -392,7 +393,7 @@ On voit aussi que BoneCP n'a créé que 7 connexions pour servir les 10 threads.
   <li><b>Spring Boot + JPA</b> : le framework fournit le DAO (repository), le mapping, le pool de connexions (HikariCP) et l'exposition REST,
   avec très peu de code. Il faut néanmoins comprendre ce qu'il fait pour corriger les problèmes rencontrés (séquence <code>hibernate_sequence</code>,
   compatibilité des versions, getters manquants) ;</li>
-  <li>le <b>pool de connexions</b> divise le temps de réponse par environ 100 dans notre test, ce qui justifie son usage systématique côté serveur.</li>
+  <li>le <b>pool de connexions</b> divise le temps de réponse par environ 75 dans notre test, ce qui justifie son usage systématique côté serveur.</li>
 </ol>
 
 </body>

@@ -1,17 +1,18 @@
 #!/bin/bash
 # Usage: shot.sh <nom_image> <délai_s> <commande> [entrées...]
-# Exécute la commande dans une session tmux, tape les entrées éventuelles et capture le résultat.
+# Exécute la commande dans une session tmux (style Terminal macOS), tape les entrées et capture le résultat.
 NAME=$1; WAIT=$2; CMD=$3; shift 3
 S=tp3shot
 TOOLS=/home/user/Ramzi/tools
 OUT=/home/user/Ramzi/rapport/img
+U=ramziguenoune
 DIR=${SHOT_DIR:-$PWD}
-SHORT="~/TP3${DIR#/home/user/Ramzi}"
-TITLE=${SHOT_TITLE:-"etudiant@isep: $SHORT"}
+COLS=${SHOT_COLS:-130}; ROWS=${SHOT_ROWS:-50}
+TITLE=${SHOT_TITLE:-"$(basename "$DIR") — -zsh — ${COLS}×${ROWS}"}
 tmux kill-session -t $S 2>/dev/null
-tmux new-session -d -s $S -x ${SHOT_COLS:-130} -y ${SHOT_ROWS:-50} -c "$DIR" \
-  "env -u JAVA_TOOL_OPTIONS LC_ALL=C.UTF-8 HOME=/home/user/Ramzi PS1='\[\e[1;32m\]etudiant@isep\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ ' bash --norc -i"
-sleep 0.5
+tmux new-session -d -s $S -x $COLS -y $ROWS -c "$DIR" \
+  "sudo -u $U env -i PATH=$PATH:/opt/maven/bin TERM=xterm-256color LC_ALL=C.UTF-8 HOME=/Users/$U USER=$U PGPASSWORD=postgres PS1='$U@MacBook-Pro-de-Ramzi \W % ' bash --norc -i"
+sleep 0.7
 tmux send-keys -t $S "clear" Enter; sleep 0.3
 tmux send-keys -t $S "$CMD" Enter
 for inp in "$@"; do sleep ${SHOT_INPUT_DELAY:-2}; tmux send-keys -t $S "$inp" Enter; done

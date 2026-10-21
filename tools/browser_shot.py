@@ -25,8 +25,8 @@ with sync_playwright() as p:
     data = base64.b64encode(content).decode()
     shown = html.escape(url.replace("http://", ""))
     wrapper = f"""<html><body style="margin:0;font-family:Arial,sans-serif;background:#dee1e6">
-<div style="height:34px;display:flex;align-items:center;padding:0 10px;gap:14px;color:#5f6368;font-size:18px">
-<span>&#8592;</span><span>&#8594;</span><span>&#8635;</span>
+<div style="height:38px;display:flex;align-items:center;padding:0 10px;gap:14px;color:#5f6368;font-size:18px">
+<span style="display:flex;gap:7px;margin-right:6px"><i style="width:12px;height:12px;border-radius:50%;background:#ff5f56;display:inline-block"></i><i style="width:12px;height:12px;border-radius:50%;background:#ffbd2e;display:inline-block"></i><i style="width:12px;height:12px;border-radius:50%;background:#27c93f;display:inline-block"></i></span><span>&#8592;</span><span>&#8594;</span><span>&#8635;</span>
 <div style="flex:1;background:#fff;border-radius:16px;height:24px;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#202124">
 &#9432;&nbsp;&nbsp;{shown}</div></div>
 <img src="data:image/png;base64,{data}" style="display:block"></body></html>"""

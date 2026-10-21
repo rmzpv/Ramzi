@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
 FONT_B = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
 BG = (30, 30, 30)
+BAR = (54, 54, 56)
 FG = (204, 204, 204)
 PALETTE = {
     30: (40, 40, 40), 31: (224, 82, 82), 32: (122, 196, 90), 33: (220, 190, 80),
@@ -64,10 +65,11 @@ def render(text, out_path, title="Terminal", min_cols=80, max_cols=230):
     h = bar + len(lines) * lh + 2 * pad
     img = Image.new("RGB", (w, h), BG)
     d = ImageDraw.Draw(img)
-    d.rectangle([0, 0, w, bar], fill=(56, 56, 56))
+    d.rectangle([0, 0, w, bar], fill=BAR)
+    d.line([0, bar, w, bar], fill=(20, 20, 20))
     for i, col in enumerate([(255, 95, 86), (255, 189, 46), (39, 201, 63)]):
         d.ellipse([10 + i * 20, 8, 22 + i * 20, 20], fill=col)
-    tf = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+    tf = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 12)
     tw = d.textlength(title, font=tf)
     d.text(((w - tw) / 2, 6), title, fill=(200, 200, 200), font=tf)
     y = bar + pad
