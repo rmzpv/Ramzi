@@ -1,0 +1,14 @@
+server.port: 9090
+
+spring.datasource.url: jdbc:postgresql://localhost/isep
+spring.datasource.username: postgres
+spring.datasource.password: postgres
+spring.datasource.driver-class-name: org.postgresql.Driver
+
+# affiche le SQL généré par Hibernate dans la console
+spring.jpa.show-sql: true
+# on ne laisse pas Hibernate modifier le schéma existant
+spring.jpa.hibernate.ddl-auto: none
+
+# Springfox 2.9.2 n'est pas compatible avec le PathPatternParser par défaut de Spring Boot 2.6+
+spring.mvc.pathmatch.matching-strategy: ant_path_matcher

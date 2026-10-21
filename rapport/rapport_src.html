@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>TP 3 – JDBC, DAO, JPA &amp; Spring, Connection Pool</title>
+<style>
+  body { font-family: "Liberation Sans", Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #1d1d1d; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 20pt; color: #1f3b6e; border-bottom: 3px solid #1f3b6e; padding-bottom: 4px; margin-top: 28px; page-break-before: always; }
+  h1.nobreak { page-break-before: avoid; }
+  h2 { font-size: 13.5pt; color: #1f3b6e; margin-top: 22px; border-left: 4px solid #4a7bd0; padding-left: 8px; }
+  h3 { font-size: 11.5pt; color: #333; margin-top: 16px; }
+  p { text-align: justify; margin: 6px 0; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; background: #f1f3f6; padding: 0 3px; border-radius: 3px; }
+  .file { border: 1px solid #ccd3de; border-radius: 4px; margin: 10px 0; page-break-inside: auto; }
+  .fname { background: #e7ecf5; font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; padding: 3px 8px; color: #333; border-bottom: 1px solid #ccd3de; }
+  .hl pre { margin: 0; padding: 7px 9px; font-family: "DejaVu Sans Mono", monospace; font-size: 8.2pt; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
+  /*PYGMENTS*/
+  .hl { background: #fbfcfe !important; }
+  figure { margin: 12px 0; text-align: center; page-break-inside: avoid; }
+  figure img { max-width: 100%; border: 1px solid #bbb; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  figcaption { font-size: 9pt; color: #555; font-style: italic; margin-top: 4px; }
+  .answer { background: #f3f8f1; border-left: 4px solid #5aa04a; padding: 8px 12px; margin: 10px 0; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a800; padding: 8px 12px; margin: 10px 0; }
+  table.t { border-collapse: collapse; margin: 10px 0; width: 100%; font-size: 9.5pt; }
+  table.t th, table.t td { border: 1px solid #c9d0db; padding: 4px 7px; text-align: left; vertical-align: top; }
+  table.t th { background: #e7ecf5; }
+  .cover { text-align: center; padding-top: 140px; page-break-after: always; }
+  .cover h1 { border: none; font-size: 28pt; page-break-before: avoid; margin-bottom: 4px; }
+  .cover .sub { font-size: 14pt; color: #4a5a78; }
+  .cover .who { margin-top: 120px; font-size: 12pt; line-height: 1.9; }
+  .toc { page-break-after: always; }
+  .toc ol { line-height: 1.75; }
+  .toc ol ol { line-height: 1.5; font-size: 10pt; }
+  ul { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>TP 3 – A Scene Of Information And Flexibility</h1>
+  <div class="sub">JDBC · DAO · JPA &amp; Spring Boot · Connection Pool</div>
+  <div class="who">
+    <b>Nom Prénom :</b> ............................................<br>
+    <b>Groupe :</b> ............<br>
+    ISEP – Bases de données / Java<br>
+    Octobre 2026
+  </div>
+</div>
+
+<div class="toc">
+<h1 class="nobreak">Sommaire</h1>
+<ol>
+  <li>Environnement de travail et base de données</li>
+  <li>Partie I – Communication avec la base (JDBC)
+    <ol><li>Exercice 1 – Localisation des départements</li><li>Exercice 2 – Move Department</li><li>Exercice 3 – Affichage générique d'une table</li><li>Exercice 4 – Sécurité</li><li>Exercice 5 – PreparedStatement</li><li>Exercice 6 – displayTable avec PreparedStatement</li><li>Exercice 7 – J2EE (bonus)</li></ol></li>
+  <li>Partie II – DAO
+    <ol><li>Exercice 8 – Inconvénients de JDBC « brut »</li><li>Exercice 9 – Bean Dept</li><li>Exercice 10 – DeptDAO.find</li><li>Exercice 11 – EmpDAO.find (récursif)</li><li>Exercice 12 – DAOFactory</li></ol></li>
+  <li>Partie III – Spring Boot &amp; JPA
+    <ol><li>III.1 – Initialisation du projet</li><li>III.2 – Activation de JPA</li><li>III.3 – Lecture des données</li><li>III.4 – Création via JPA + Swagger</li><li>III.5 – CRUD REST complet (code complet)</li></ol></li>
+  <li>Partie IV – Pool de connexions (bonus)</li>
+  <li>Partie V – Générateur de DAO (bonus)</li>
+  <li>Conclusion</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h1 class="nobreak">1. Environnement de travail et base de données</h1>
+
+<table class="t">
+<tr><th>Élément</th><th>Version utilisée</th></tr>
+<tr><td>SGBD</td><td>PostgreSQL 16 (local, base <code>isep</code>, utilisateur <code>postgres</code>)</td></tr>
+<tr><td>JDK</td><td>OpenJDK 21</td></tr>
+<tr><td>Driver JDBC</td><td><code>postgresql-42.7.3.jar</code> (celui demandé dans l'énoncé)</td></tr>
+<tr><td>Build</td><td><code>javac</code> pour les parties I, II, IV, V ; Maven 3 pour la partie III</td></tr>
+<tr><td>Spring Boot</td><td>2.7.18 (voir remarque en partie III), Hibernate 5.6, Springfox 2.9.2</td></tr>
+</table>
+
+<p>La base utilisée est le schéma classique <b>EMP / DEPT</b> (avec les colonnes <code>efirst</code> et <code>tel</code> comme dans l'énoncé).
+Le script de création est fourni ci-dessous ; il est rejoué avant chaque série de tests pour repartir d'un état propre.</p>
+
+[[code sql/schema.sql]]
+
+[[img db_setup | structure de la table EMP et contenu de DEPT après exécution du script]]
+
+<p>Organisation du code rendu :</p>
+<ul>
+  <li><code>part1-jdbc/src/fr/isep/tp3/jdbc</code> : partie I (classe <code>Main</code>) ;</li>
+  <li><code>part1-jdbc/src/fr/isep/tp3/dao</code> : partie II (beans, DAO, factory) ;</li>
+  <li><code>part1-jdbc/src/fr/isep/tp3/pool</code> et <code>generator</code> : bonus parties IV et V ;</li>
+  <li><code>TP3_testjpa/</code> : projet Maven Spring Boot de la partie III.</li>
+</ul>
+
+[[img p1_compile | compilation des parties I, II, IV et V en ligne de commande]]
+
+<!-- ============================================================ -->
+<h1>2. Partie I – Communication avec la base (JDBC)</h1>
+
+<p>Le squelette de l'énoncé a été repris tel quel : chargement du driver avec <code>Class.forName("org.postgresql.Driver")</code>
+(facultatif depuis JDBC 4, le driver étant détecté automatiquement par le <code>ServiceLoader</code>, mais sans effet négatif),
+ouverture de la connexion via <code>DriverManager.getConnection(url, user, pass)</code> et fermeture dans le bloc <code>finally</code>.
+La méthode <code>main</code> prend en argument le numéro de l'exercice à exécuter, ce qui permet de lancer chaque exercice séparément.</p>
+
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void main(String[] args)]]
+
+<h2>Exercice 1 – Ajout de la localisation du département</h2>
+<p>Il suffit d'ajouter la colonne <code>loc</code> dans le <code>SELECT</code> et de la récupérer avec <code>getString("loc")</code>.
+J'ai aussi ajouté la fermeture du <code>Statement</code>, oubliée dans le code d'exemple.</p>
+
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void displayDepartment(]]
+[[img ex1 | exécution de l'exercice 1 : chaque département avec sa localisation]]
+
+<h2>Exercice 2 – Move Department</h2>
+<p>La méthode exécute un <code>UPDATE</code> via <code>executeUpdate()</code>, qui renvoie le nombre de lignes modifiées
+(1 si l'employé existe, 0 sinon). Les valeurs sont saisies au clavier avec un <code>Scanner</code> (cf. Tips (1)).
+Une petite méthode <code>displayEmployee</code> affiche l'employé avant/après pour vérifier le résultat.</p>
+
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void moveDepartment(]]
+[[img ex2 | SMITH (7369) passe du département 20 (RESEARCH) au département 30 (SALES)]]
+
+<h2>Exercice 3 – Affichage générique d'une table</h2>
+<p>On ne connaît pas à l'avance les colonnes : on utilise donc <code>ResultSetMetaData</code> (Tips (2)).
+<code>getColumnCount()</code> donne le nombre de colonnes et <code>getColumnName(i)</code> leur nom, ce qui permet d'afficher l'en-tête,
+puis chaque ligne est parcourue colonne par colonne avec <code>getString(i)</code> (accepté même pour les colonnes numériques ou dates).
+L'affichage a été factorisé dans <code>printResultSet</code> car il est réutilisé dans les exercices suivants.</p>
+
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void displayTable(Connection connexion, String tableName)]]
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|static void printResultSet(]]
+[[img ex3 | displayTable("emp") puis displayTable("dept") : même méthode, tables différentes]]
+
+<h2>Exercice 4 – Sécurité</h2>
+<div class="answer">
+<p><b>Faille principale : l'injection SQL.</b> Les méthodes précédentes construisent la requête par <b>concaténation de chaînes</b>
+avec des valeurs venant de l'utilisateur. Le SGBD ne fait aucune différence entre le code SQL écrit par le développeur
+et les données saisies : un utilisateur peut donc saisir du SQL qui sera exécuté.</p>
+<p>Démonstration (dans une transaction annulée par un <code>rollback</code> pour ne pas abîmer la base) :</p>
+<ul>
+  <li>en saisissant <code>7369 OR 1=1</code> comme numéro d'employé, la requête devient
+  <code>UPDATE emp SET deptno = 40 WHERE empno = 7369 OR 1=1</code> : <b>les 14 employés</b> sont déplacés au lieu d'un seul ;</li>
+  <li>en saisissant <code>x' OR '1'='1</code> comme nom, la condition du <code>WHERE</code> est toujours vraie et on récupère
+  toute la table (contournement d'une authentification, fuite de données comme les salaires) ;</li>
+  <li>pour <code>displayTable(tableName)</code>, on pourrait même passer <code>emp; DROP TABLE emp</code>.</li>
+</ul>
+</div>
+
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void sqlInjectionDemo(]]
+[[img ex4 | l'injection modifie 14 lignes au lieu d'une et renvoie tous les salaires]]
+
+<div class="answer">
+<p><b>Autres inconvénients de cette méthode « native » :</b></p>
+<ul>
+  <li><b>Performance</b> : avec un <code>Statement</code>, la requête est ré-analysée et re-planifiée par le SGBD à chaque exécution ;</li>
+  <li><b>Robustesse</b> : une valeur contenant une apostrophe (ex. <code>O'Neil</code>) casse la requête, il faut tout échapper à la main ;</li>
+  <li><b>Pas de typage</b> : les erreurs (nom de colonne, type) n'apparaissent qu'à l'exécution ;</li>
+  <li><b>Gestion manuelle des ressources</b> : <code>Connection</code>, <code>Statement</code>, <code>ResultSet</code> à fermer, sinon fuite de connexions et saturation du serveur ;</li>
+  <li><b>Coût de la connexion</b> : une connexion ouverte à chaque appel coûte cher (cf. partie IV) ;</li>
+  <li>le SQL est mélangé au code métier et le mapping ligne → objet est entièrement manuel (cf. exercice 8).</li>
+</ul>
+<p>Comme le rappelle l'énoncé, la validation doit se faire <b>côté serveur</b> : un contrôle en JavaScript côté client se contourne facilement.</p>
+</div>
+
+<h2>Exercice 5 – moveDepartment avec PreparedStatement</h2>
+<p>La requête est écrite avec des <code>?</code> et les valeurs sont passées avec <code>setInt</code>. Le driver envoie la requête et les
+paramètres <b>séparément</b> au serveur : une valeur ne peut jamais être interprétée comme du SQL.
+Ici la saisie est lue comme une chaîne (pour pouvoir tenter l'injection) puis convertie en entier : une saisie non numérique est refusée
+avant même d'atteindre la base. J'utilise aussi un <i>try-with-resources</i> qui ferme automatiquement le <code>PreparedStatement</code>.</p>
+
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void moveDepartmentPrepared(]]
+[[img ex5_attack | la même attaque « 7369 OR 1=1 » est refusée, la table n'est pas modifiée]]
+[[img ex5_ok | utilisation normale : SMITH (7369) revient dans le département 20]]
+
+<h2>Exercice 6 – displayTable avec PreparedStatement</h2>
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void displayTablePrepared(]]
+[[img ex6 | « SELECT * FROM ? » provoque une erreur de syntaxe ; la version sécurisée fonctionne et refuse l'injection]]
+
+<div class="answer">
+<p><b>Pourquoi ça ne marche pas ?</b> Les paramètres <code>?</code> d'une requête préparée ne peuvent remplacer que des
+<b>valeurs</b> (littéraux), jamais des <b>identifiants</b> (nom de table, de colonne) ni des mots-clés SQL.
+La requête est envoyée au serveur pour être analysée et planifiée <b>avant</b> que les valeurs soient connues :
+pour construire le plan d'exécution, PostgreSQL doit savoir quelle table lire. <code>SELECT * FROM $1</code> n'est donc pas du SQL valide
+(d'où l'erreur <code>syntax error at or near "$1"</code>, SQLState 42601). Et même si c'était accepté, <code>setString</code> produirait
+la chaîne littérale <code>'emp'</code> et non l'identifiant <code>emp</code>.</p>
+<p><b>Solution</b> : vérifier le nom de table par <b>liste blanche</b>. J'interroge les métadonnées de la base
+(<code>DatabaseMetaData.getTables</code>) et je n'exécute la requête que si la table existe réellement.</p>
+</div>
+[[method part1-jdbc/src/fr/isep/tp3/jdbc/Main.java|public static void displayTableSafe(]]
+
+<h2>Exercice 7 – J2EE (bonus)</h2>
+<p>Je n'ai pas réalisé cette version servlet/J2EE. L'exposition des données dans un navigateur est en revanche faite
+dans la partie III avec Spring Boot (Tomcat embarqué), qui est l'approche moderne de la même idée : le serveur reçoit les requêtes HTTP
+et interroge la base.</p>
+
+<!-- ============================================================ -->
+<h1>3. Partie II – DAO</h1>
+
+<h2>Exercice 8 – Inconvénients de JDBC tel qu'utilisé ci-dessus</h2>
+<div class="answer">
+<ul>
+  <li><b>Code de persistance dispersé dans le code métier</b> : le SQL est écrit partout où on en a besoin (schéma « Before DAO »).
+  Si une table change (colonne renommée, changement de SGBD), il faut modifier le code à de nombreux endroits ;</li>
+  <li><b>Pas d'objets métier</b> : on manipule des <code>ResultSet</code> et des colonnes au lieu d'objets <code>Emp</code> / <code>Dept</code> ;
+  le mapping relationnel → objet est refait à chaque requête ;</li>
+  <li><b>Beaucoup de code répétitif</b> (« boilerplate ») : ouverture, <code>try/catch/finally</code>, fermeture des ressources, <code>SQLException</code> partout ;</li>
+  <li><b>Couplage fort</b> au SGBD et au driver : impossible de changer de source de données (autre base, fichier, web service) sans réécrire le métier ;</li>
+  <li><b>Difficile à tester</b> : on ne peut pas remplacer la base par un faux objet (mock) pour tester la logique métier ;</li>
+  <li>gestion manuelle des connexions (une par appel), des transactions et des relations entre tables (ex. le manager d'un employé).</li>
+</ul>
+<p>Le pattern <b>DAO</b> répond à cela en isolant toute la persistance dans une couche dédiée : le métier ne manipule que des objets
+et des méthodes <code>find / create / update / delete</code>, sans savoir comment ni où les données sont stockées.</p>
+</div>
+
+<h2>Exercice 9 – Bean Dept</h2>
+<p>Un attribut par colonne de la table <code>DEPT</code>, avec le même type, un constructeur vide (convention JavaBean),
+les getters/setters et un <code>toString()</code> pour l'affichage.</p>
+[[code part1-jdbc/src/fr/isep/tp3/dao/Dept.java]]
+
+<p>Le bean <code>Emp</code> fourni a été complété (getters/setters et <code>toString</code>). Le manager est bien de type <code>Emp</code> et le
+département de type <code>Dept</code>. J'ai choisi <code>String</code> pour <code>tel</code> au lieu de <code>int</code> : un numéro qui commence par 0
+(<code>0149545241</code>) perdrait son zéro et ne tiendrait de toute façon pas dans un <code>int</code> pour certains numéros.</p>
+[[method part1-jdbc/src/fr/isep/tp3/dao/Emp.java|public class Emp]]
+
+<p>Classe abstraite <code>DAO&lt;T&gt;</code> reprise de l'énoncé :</p>
+[[code part1-jdbc/src/fr/isep/tp3/dao/DAO.java]]
+
+<h2>Exercice 10 – DeptDAO.find</h2>
+<p><code>find</code> exécute un <code>SELECT ... WHERE deptno = ?</code> en <code>PreparedStatement</code> et construit un objet <code>Dept</code> ;
+il renvoie <code>null</code> si le département n'existe pas. J'ai également implémenté <code>create</code>, <code>update</code> et <code>delete</code>
+(testés dans l'exercice 12).</p>
+[[code part1-jdbc/src/fr/isep/tp3/dao/DeptDAO.java]]
+[[img ex10 | find(20) renvoie le département RESEARCH ; find(99) renvoie null]]
+
+<h2>Exercice 11 – EmpDAO.find (construction récursive)</h2>
+<p>En base, <code>mgr</code> est un entier ; en Java, c'est un <code>Emp</code>. Après avoir lu la ligne de l'employé, on rappelle donc
+<code>find(mgr)</code> <b>récursivement</b>, jusqu'à arriver au président dont le <code>mgr</code> est <code>NULL</code> (condition d'arrêt,
+testée avec <code>rs.wasNull()</code>). Le département est construit en déléguant au <code>DeptDAO</code>.</p>
+[[code part1-jdbc/src/fr/isep/tp3/dao/EmpDAO.java]]
+[[img ex11 | SMITH est reconstruit avec toute sa chaîne hiérarchique : SMITH → FORD → JONES → KING]]
+
+<div class="note">
+<p><b>Remarques / limites observées :</b></p>
+<ul>
+  <li>Chaque niveau de hiérarchie déclenche 2 requêtes (employé + département) : c'est le problème classique du <b>« N+1 select »</b>.
+  Pour une liste d'employés il vaudrait mieux une jointure ou un cache des objets déjà chargés (ce que fait JPA avec son contexte de persistance) ;</li>
+  <li>si les données contenaient un cycle (A manager de B et B manager de A), la récursion serait infinie : un cache par identifiant règlerait aussi ce cas ;</li>
+  <li><code>getInt()</code> renvoie <b>0 pour un NULL</b> : sur la capture, <code>comm=0</code> pour SMITH alors que la valeur est NULL en base.
+  Utiliser <code>Integer</code> dans le bean permettrait de distinguer les deux (c'est ce que fait le générateur de la partie V).</li>
+</ul>
+</div>
+
+<h2>Exercice 12 – DAOFactory</h2>
+<p>La fabrique centralise l'instanciation des DAO : le code client ne fait plus jamais <code>new DeptDAO(...)</code> et ne manipule
+que le type abstrait <code>DAO&lt;T&gt;</code>. Changer d'implémentation (autre SGBD, pool de connexions...) ne demande de modifier que la fabrique.</p>
+[[code part1-jdbc/src/fr/isep/tp3/dao/DAOFactory.java]]
+[[code part1-jdbc/src/fr/isep/tp3/dao/DaoMain.java]]
+[[img ex12 | utilisation de la factory + test CRUD complet (create / update / delete) sur un département 50]]
+
+<!-- ============================================================ -->
+<h1>4. Partie III – Spring Boot &amp; JPA</h1>
+
+<h2>III.1 – Initialisation du projet Spring</h2>
+<p>Projet Maven <code>TP3_testjpa</code>, groupe <code>com.isep</code>, artefact <code>testjpa</code>, version <code>0.0.1-SNAPSHOT</code>,
+avec la classe <code>TestjpaApplication</code>, le <code>SimpleController</code> et le fichier <code>application.yml</code> (port 9090).</p>
+<div class="note">
+<p><b>Adaptation de version :</b> l'énoncé utilise Spring Boot <code>2.2.5.RELEASE</code> et Java 8/16. Or la 2.2.x n'est supportée
+qu'avec Java 8 à 13, et ma machine a un JDK 21 (ses versions de Spring 5.2 / Hibernate 5.4 ne sont pas prévues pour lire des classes Java 21). J'ai donc pris <b>Spring Boot 2.7.18</b>, la dernière version 2.x :
+elle garde <code>javax.persistence</code>, donc tout le code de l'énoncé reste valable sans modification
+(la version 3.x aurait imposé <code>jakarta.persistence</code>).</p>
+</div>
+[[img spring_start | démarrage de l'application : Tomcat sur le port 9090, connexion Hikari à PostgreSQL]]
+[[img hello_null | localhost:9090 sans paramètre]]
+[[img hello_bob | localhost:9090/?name=Bob%20Marley]]
+
+<p>Remarque : la deuxième version du contrôleur de l'énoncé utilise <code>@Param("name")</code> de <code>org.springframework.data.repository.query</code>.
+Cette annotation sert à nommer les paramètres des requêtes des <i>repositories</i> Spring Data, pas à lire un paramètre HTTP ;
+cela fonctionne uniquement parce que le nom de la variable Java est aussi <code>name</code>. J'ai gardé <code>@RequestParam(value = "name", required = false)</code>,
+qui est l'annotation correcte.</p>
+
+<h2>III.2 – Activation de JPA et connexion à la base</h2>
+<p>Ajout de <code>spring-boot-starter-data-jpa</code> et du driver PostgreSQL dans le <code>pom.xml</code> (attention, l'énoncé contient une coquille :
+<code>org.postresql</code> au lieu de <code>org.postgresql</code>, ce qui empêche Maven de trouver la dépendance), puis de la configuration de la
+<code>DataSource</code> dans <code>application.yml</code>. Le démarrage sans erreur (figure précédente, lignes <code>HikariPool-1 - Start completed</code>
+et <code>Using dialect: PostgreSQL10Dialect</code>) confirme que la connexion fonctionne. On remarque au passage que Spring Boot utilise
+<b>HikariCP</b> comme pool de connexions par défaut (lien avec la partie IV).</p>
+
+<h2>III.3 – Lecture des données</h2>
+<p>Avec l'entité <code>Emp</code> de l'énoncé (getter/setter uniquement pour <code>empno</code>), l'endpoint <code>/employees</code> fonctionne,
+mais Jackson ne sérialise que les propriétés qui ont un getter : on n'obtient que les identifiants.</p>
+[[img emp_only_id | /employees avec l'entité de l'énoncé : seul empno apparaît]]
+<p>J'ai ensuite ajouté <b>Lombok</b> (<code>@Data</code> génère getters, setters, <code>equals/hashCode</code> et <code>toString</code> à la compilation)
+et mappé toutes les colonnes de la table. J'ai utilisé Lombok 1.18.34 car la 1.18.12 proposée dans l'énoncé ne fonctionne pas avec un JDK 21.</p>
+[[img emp_all | /employees avec @Data : tous les attributs sont renvoyés en JSON]]
+
+<h2>III.4 – Création d'un objet via JPA + Swagger</h2>
+<p>Ajout de la méthode <code>@PostMapping("/employees")</code> qui appelle <code>empRepository.save(emp)</code>.
+Au premier test, la création échoue :</p>
+[[img post_error | erreur 500 : la séquence hibernate_sequence n'existe pas]]
+<div class="answer">
+<p><b>Explication :</b> l'entité de l'énoncé porte <code>@GeneratedValue</code> sans stratégie, donc <code>GenerationType.AUTO</code>.
+Avec PostgreSQL, Hibernate 5 choisit alors une séquence nommée <code>hibernate_sequence</code> (<code>select nextval('hibernate_sequence')</code>)...
+qui n'existe pas dans notre schéma, puisque <code>empno</code> est une clé saisie manuellement (pas de <code>SERIAL</code> / <code>IDENTITY</code>).
+<b>Correction :</b> j'ai retiré <code>@GeneratedValue</code> ; l'<code>empno</code> est fourni par le client dans le JSON, comme dans la base d'origine.
+(Autre solution possible : créer une séquence et utiliser <code>@GeneratedValue(strategy = GenerationType.SEQUENCE)</code> avec <code>@SequenceGenerator</code>.)</p>
+</div>
+
+<p>Pour Swagger, Springfox 2.9.2 n'est pas compatible avec le nouveau moteur de correspondance d'URL de Spring Boot 2.6+ ; il faut ajouter
+<code>spring.mvc.pathmatch.matching-strategy: ant_path_matcher</code> dans <code>application.yml</code>, sinon l'application ne démarre pas.</p>
+[[img swagger | Swagger UI : tous les endpoints du contrôleur sont détectés automatiquement]]
+[[img apidocs | le JSON /v2/api-docs généré, sur lequel s'appuie l'interface]]
+
+<h2>III.5 – GET by ID / GET all / Update / Delete via JPA et REST</h2>
+<p>Conventions REST respectées :</p>
+<table class="t">
+<tr><th>Méthode</th><th>URL</th><th>Action</th><th>Codes de retour</th></tr>
+<tr><td>GET</td><td><code>/employees</code></td><td>liste (filtre optionnel <code>?job=</code>)</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/employees/{id}</code></td><td>un employé</td><td>200, 404 si inconnu</td></tr>
+<tr><td>POST</td><td><code>/employees</code></td><td>création</td><td>201 + en-tête <code>Location</code>, 400 sans empno, 409 si déjà existant</td></tr>
+<tr><td>PUT</td><td><code>/employees/{id}</code></td><td>mise à jour complète</td><td>200, 404 si inconnu</td></tr>
+<tr><td>DELETE</td><td><code>/employees/{id}</code></td><td>suppression</td><td>204, 404 si inconnu</td></tr>
+</table>
+<p>Ressource au <b>pluriel</b>, identifiant dans le chemin, <b>verbe HTTP</b> pour l'action (pas de <code>/deleteEmployee</code>),
+et des codes HTTP significatifs grâce à <code>ResponseEntity</code>. Le filtre par métier utilise une <b>requête dérivée</b> Spring Data
+(<code>findByJob</code>) : la requête SQL est générée à partir du nom de la méthode, sans écrire de SQL.</p>
+
+[[img api_tests | script de test curl : tous les cas (succès et erreurs) renvoient le bon code HTTP]]
+[[img swagger_try | test de GET /employees/{id} directement depuis Swagger UI]]
+
+<h3>Code complet du projet (copié comme demandé)</h3>
+[[code TP3_testjpa/pom.xml]]
+[[code TP3_testjpa/src/main/resources/application.yml]]
+[[code TP3_testjpa/src/main/java/com/isep/testjpa/TestjpaApplication.java]]
+[[code TP3_testjpa/src/main/java/com/isep/testjpa/model/Emp.java]]
+[[code TP3_testjpa/src/main/java/com/isep/testjpa/repository/EmpRepository.java]]
+[[code TP3_testjpa/src/main/java/com/isep/testjpa/controller/SimpleController.java]]
+[[code TP3_testjpa/src/main/java/com/isep/testjpa/configuration/SpringFoxConfig.java]]
+[[code TP3_testjpa/test_api.sh]]
+
+<p><b>Comparaison avec la partie II :</b> le <code>EmpRepository</code> (une interface vide de 3 lignes) remplace tout le <code>EmpDAO</code> écrit à la main :
+Spring Data génère l'implémentation (<code>findAll</code>, <code>findById</code>, <code>save</code>, <code>deleteById</code>...), Hibernate fait le mapping
+ligne ↔ objet grâce aux annotations, et la gestion des connexions et des transactions est automatique. C'est exactement le rôle du pattern DAO,
+mais fourni par le framework.</p>
+
+<!-- ============================================================ -->
+<h1>5. Partie IV – Pool de connexions (bonus)</h1>
+
+<h2>IV.1 – Pool de connexions « fait main »</h2>
+<p>Au démarrage, le pool ouvre N connexions via une <code>DataSource</code> (<code>PGSimpleDataSource</code>) au lieu du <code>DriverManager</code>
+et les range dans une <code>ArrayBlockingQueue</code>. Un client prend une connexion avec <code>getConnection()</code> et la rend avec
+<code>release()</code> au lieu de la fermer. La <code>BlockingQueue</code> est thread-safe : si toutes les connexions sont prises, le thread
+appelant attend qu'une connexion soit rendue, ce qui borne le nombre de connexions ouvertes sur le serveur.</p>
+[[code part1-jdbc/src/fr/isep/tp3/pool/ConnectionPool.java]]
+
+<h2>IV.2 – BoneCP</h2>
+<p>Grâce à l'interface <code>ConnectionProvider</code>, passer du pool maison à BoneCP ne change que quelques lignes : c'est l'intérêt d'avoir isolé
+l'obtention des connexions. Avec BoneCP, <code>close()</code> ne ferme pas la connexion mais la rend au pool.</p>
+[[code part1-jdbc/src/fr/isep/tp3/pool/PoolMain.java]]
+
+<h2>Mesures</h2>
+<p>Test : 500 requêtes <code>SELECT</code> exécutées par 10 threads en parallèle.</p>
+[[img pool | comparaison sans pool / pool maison / BoneCP]]
+<div class="answer">
+<p>Sans pool, les 500 requêtes prennent environ <b>5,2 s</b> ; avec un pool, environ <b>50 à 75 ms</b>, soit un facteur d'environ <b>100</b>.
+Presque tout le temps est passé à <b>ouvrir les connexions</b> (connexion TCP, création d'un processus côté PostgreSQL, authentification
+SCRAM-SHA-256 volontairement coûteuse), et non à exécuter la requête elle-même. Le pool paie ce coût une seule fois au démarrage.
+On voit aussi que BoneCP n'a créé que 7 connexions pour servir les 10 threads.</p>
+<p>BoneCP n'est plus maintenu : son auteur conseille lui-même <b>HikariCP</b>, qui est justement le pool par défaut de Spring Boot
+(cf. logs de la partie III) et qui se règle dans <code>application.yml</code> (<code>spring.datasource.hikari.maximum-pool-size</code>, etc.).</p>
+</div>
+
+<!-- ============================================================ -->
+<h1>6. Partie V – Générateur de DAO (bonus)</h1>
+<p>Le générateur lit le <b>dictionnaire de données</b> de PostgreSQL (vue standard <code>information_schema.columns</code>, plus
+<code>table_constraints</code> / <code>key_column_usage</code> pour repérer la clé primaire), puis écrit pour chaque table une classe POJO et une classe DAO
+(méthode <code>find</code> implémentée, les autres laissées en <code>TODO</code>).</p>
+<ul>
+  <li><b>V.1</b> : liste de toutes les colonnes avec leur type et la clé primaire ;</li>
+  <li><b>V.2 / V.3</b> : création des fichiers <code>.java</code> des POJO (attributs, getters/setters, <code>toString</code>) avec conversion des types SQL → Java ;</li>
+  <li><b>V.4</b> : création des DAO qui héritent de la classe <code>DAO&lt;T&gt;</code> de la partie II.</li>
+</ul>
+[[img gen_v1 | V.1 : lecture du dictionnaire de données puis génération des 4 fichiers]]
+[[img gen_test | les classes générées compilent et fonctionnent]]
+<p>Extrait du générateur (lecture du dictionnaire) et exemple de classe générée :</p>
+[[method part1-jdbc/src/fr/isep/tp3/generator/DaoGenerator.java|static Map<String, List<Column>> readDictionary(]]
+[[code part1-jdbc/generated/fr/isep/tp3/generated/DeptDAO.java]]
+
+<!-- ============================================================ -->
+<h1>7. Conclusion</h1>
+<p>Ce TP montre l'évolution de l'accès aux données en Java :</p>
+<ol>
+  <li><b>JDBC brut</b> : contrôle total mais beaucoup de code, et des risques réels (injection SQL, fuites de connexions).
+  Le <code>PreparedStatement</code> est indispensable dès qu'une valeur vient de l'utilisateur, et un identifiant (nom de table) doit être validé par liste blanche ;</li>
+  <li><b>DAO + Factory</b> : la persistance est isolée du métier, qui manipule des objets ; mais le mapping (notamment les relations comme le manager)
+  reste à écrire et à optimiser à la main ;</li>
+  <li><b>Spring Boot + JPA</b> : le framework fournit le DAO (repository), le mapping, le pool de connexions (HikariCP) et l'exposition REST,
+  avec très peu de code. Il faut néanmoins comprendre ce qu'il fait pour corriger les problèmes rencontrés (séquence <code>hibernate_sequence</code>,
+  compatibilité des versions, getters manquants) ;</li>
+  <li>le <b>pool de connexions</b> divise le temps de réponse par environ 100 dans notre test, ce qui justifie son usage systématique côté serveur.</li>
+</ol>
+
+</body>
+</html>

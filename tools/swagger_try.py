@@ -1,0 +1,17 @@
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    b = p.chromium.launch(executable_path="/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args=["--no-proxy-server"])
+    page = b.new_page(viewport={"width": 1000, "height": 900})
+    page.goto("http://localhost:9090/swagger-ui.html")
+    page.wait_for_timeout(2500)
+    page.click("text=simple-controller")
+    page.wait_for_timeout(500)
+    op = page.locator("#operations-simple-controller-getEmployeeUsingGET")
+    op.locator(".opblock-summary").click()
+    page.wait_for_timeout(500)
+    op.locator("text=Try it out").click()
+    op.locator("tbody input").first.fill("7839")
+    op.locator("text=Execute").click()
+    page.wait_for_timeout(1500)
+    op.screenshot(path="/home/user/Ramzi/rapport/img/swagger_try.png")
+    b.close()
